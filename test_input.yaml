@@ -1,0 +1,8 @@
+# test_input.yaml
+scan_id: "test-scan-001"
+environment: "pr"
+languages:
+  - python
+files:
+  - "test_samples/vuln_app.py"
+  - "test_samples/requirements.txt"
