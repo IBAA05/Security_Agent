@@ -1,6 +1,13 @@
-# Direct third-party dependencies used in the project source files.
-# semgrep, gitleaks, and trivy are invoked as CLI tools (subprocess), not imported.
+# ==============================================================================
+# SECURITY AGENT - INSTALLATION GUIDE (PYTHON PACKAGES & CORE TOOLS)
+# ==============================================================================
 
-pydantic==2.12.5       # schemas.py — BaseModel, field_validator
-PyYAML==6.0.2          # test01_Tools.py — yaml.safe_load
-requests==2.32.5       # tools/zap.py — HTTP calls to ZAP daemon
+# [1] CORE PYTHON LIBRARIES (Imported in source code)
+# Install via: pip install -r requirements.txt
+# ------------------------------------------------------------------------------
+pydantic==2.12.5           # Data schemas (schemas.py)
+PyYAML==6.0.3              # YAML input parsing (main.py, test01_Tools.py)
+requests==2.32.5           # HTTP client (tools/zap.py)
+openai==2.29.0             # LLM API client (llm/agent.py)
+python-dotenv==1.2.2       # Env variable management (llm/agent.py)
+
