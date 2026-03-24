@@ -1,17 +1,1 @@
-# Environment & secrets
-.env
-
-# Python
-venv/
-__pycache__/
-*.pyc
-*.pyo
-.semgrep/
-
-# IDE
-.idea/
-.vscode/
-
-# Binary tool archives (downloaded separately)
-*.tar.gz
-*.deb
+venv/\n.env\n__pycache__/\n*.pyc\n.semgrep/

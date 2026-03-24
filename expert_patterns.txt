@@ -1,0 +1,33 @@
+ARGUS SECURITY EXPERT PATTERNS — enforce these on every scan:
+
+1. SECRETS IN ENVIRONMENT VARIABLES
+   Any value loaded via os.getenv() or os.environ[] that contains the words
+   key, secret, password, token, credential, or auth is a HIGH violation.
+   The correct approach is to use a secrets manager (Vault, AWS Secrets Manager).
+   Never treat env vars as a safe secrets storage mechanism.
+
+2. HARDCODED CREDENTIALS
+   Any string literal that matches patterns like "sk-", "Bearer ", "-----BEGIN",
+   or contains password= / secret= is CRITICAL regardless of context.
+   Even in test files — test credentials leak into git history.
+
+3. WEAK CRYPTOGRAPHY
+   MD5 and SHA1 must never be used for passwords or security-sensitive hashing.
+   RSA keys must be 4096-bit minimum. AES keys must be 256-bit minimum.
+   JWT algorithms: RS256 or ES256 only. Never HS256 in production.
+
+4. SQL INJECTION
+   String concatenation into SQL queries is always HIGH even if the input
+   appears sanitized at the call site. Use parameterized queries only.
+
+5. ALGORITHM MIGRATION RISKS
+   During any auth algorithm migration (e.g. HS256 → RS256), verify that:
+   - The old algorithm is fully disabled, not just deprecated
+   - Key type validation exists (symmetric vs asymmetric mismatch will silently fail)
+   - Config loaders are updated in sync with the code change
+
+6. FALSE POSITIVE INDICATORS
+   Reduce confidence when:
+   - The file path contains: test, spec, mock, fixture, example, sample
+   - The finding is in a comment or a docstring
+   - The "secret" value is clearly a placeholder like "your-key-here" or "xxx"
