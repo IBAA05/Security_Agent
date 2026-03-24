@@ -1,0 +1,6 @@
+# Direct third-party dependencies used in the project source files.
+# semgrep, gitleaks, and trivy are invoked as CLI tools (subprocess), not imported.
+
+pydantic==2.12.5       # schemas.py — BaseModel, field_validator
+PyYAML==6.0.2          # test01_Tools.py — yaml.safe_load
+requests==2.32.5       # tools/zap.py — HTTP calls to ZAP daemon
