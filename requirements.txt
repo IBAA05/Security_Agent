@@ -1,21 +1,27 @@
 # ==============================================================================
-# SECURITY AGENT - INSTALLATION GUIDE (PYTHON PACKAGES & CORE TOOLS)
+# ARGUS SECURITY AGENT - FULL DEPENDENCY LIST
 # ==============================================================================
 
-# [1] CORE PYTHON LIBRARIES (Imported in source code)
-# Install via: pip install -r requirements.txt
+# [1] CORE SECURITY AGENT LIBRARIES
 # ------------------------------------------------------------------------------
-pydantic==2.12.5           # Data schemas (schemas.py)
-PyYAML==6.0.3              # YAML input parsing (main.py, test01_Tools.py)
-requests==2.32.5           # HTTP client (tools/zap.py)
-openai==2.29.0             # LLM API client (llm/agent.py)
-python-dotenv==1.2.2       # Env variable management (llm/agent.py)
+pydantic==2.12.5           # High-performance data schemas (schemas.py)
+PyYAML==6.0.3              # Loading scan configurations (main.py, test01_Tools.py)
+requests==2.32.5           # HTTP client for DAST tools (tools/zap.py)
+python-dotenv==1.2.2       # Loading .env for API keys & environment (llm/agent.py)
 
-# [2] TOOL: SEMGREP (SAST)
+# [2] AGENTIC AI & REASONING (DeepSeek/GPT Integration)
 # ------------------------------------------------------------------------------
-semgrep==1.156.0           # Static Analysis (pip installable)
+openai==2.29.0             # Official LLM interface for reasoning & reflexion (llm/agent.py)
 
-# [3] TOOL: GITLEAKS (Secret Scanning)
+# [3] SECURITY TOOL: SEMGREP (SAST)
+# ------------------------------------------------------------------------------
+semgrep==1.156.0           # Python-based CLI tool for semantic code analysis
+
+# ==============================================================================
+# EXTERNAL SECURITY TOOLS SETUP (Manual Installation Required)
+# ==============================================================================
+
+# [4] GITLEAKS (Secret Scanning)
 # Manual Installation Required:
 # ------------------------------------------------------------------------------
 # LINUX:
@@ -25,7 +31,7 @@ semgrep==1.156.0           # Static Analysis (pip installable)
 # MAC:
 #   brew install gitleaks
 
-# [4] TOOL: TRIVY (Vulnerability Scanner)
+# [5] TRIVY (Dependency Vulnerability Scanner)
 # Manual Installation Required:
 # ------------------------------------------------------------------------------
 # LINUX:
@@ -33,7 +39,7 @@ semgrep==1.156.0           # Static Analysis (pip installable)
 # MAC:
 #   brew install trivy
 
-# [5] TOOL: OWASP ZAP (DAST)
+# [6] OWASP ZAP (DAST - Dynamic Analysis) Target: Staging Environments
 # ------------------------------------------------------------------------------
-# Install manually from: https://www.zaproxy.org/
-# Ensure ZAP is running as a daemon on port 8080 (default) for local scans.
+# Download and install manually from: https://www.zaproxy.org/
+# Must be running as a local daemon at http://localhost:8080 during scans.
