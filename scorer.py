@@ -81,3 +81,46 @@ def score_all(findings: list[NormalizedFinding]) -> list[NormalizedFinding]:
     for f in findings:
         f.base_confidence = score(f, findings)
     return findings
+
+from memory.store import get_file_context
+
+def score_with_memory(
+    findings: list[NormalizedFinding],
+    file_paths: list[str]
+) -> list[NormalizedFinding]:
+    """
+    Score findings using both signals AND historical memory.
+    """
+    memory_ctx = get_file_context(file_paths)
+
+    for f in findings:
+        # Base score from signals
+        f.base_confidence = score(f, findings)
+
+        # Memory boost
+        if f.file_path and f.file_path in memory_ctx:
+            file_mem = memory_ctx[f.file_path]
+            known = file_mem["known_findings"].get(f.rule_id, {})
+
+            if known:
+                times_seen = known.get("times_seen", 0)
+                confirmed = known.get("confirmed_count", 0)
+                fp_count = known.get("was_false_positive_count", 0)
+                human_verdict = known.get("human_verdict")
+
+                # If human confirmed this finding before — big boost
+                if human_verdict == "confirmed":
+                    f.base_confidence = min(f.base_confidence + 0.25, 1.0)
+
+                # If human dismissed as FP before — big reduction
+                elif human_verdict == "false_positive":
+                    f.base_confidence = max(f.base_confidence - 0.4, 0.0)
+
+                # Seen many times and always real — moderate boost
+                elif times_seen >= 3 and confirmed > fp_count:
+                    boost = min(times_seen * 0.05, 0.2)
+                    f.base_confidence = min(f.base_confidence + boost, 1.0)
+
+        f.base_confidence = round(f.base_confidence, 3)
+
+    return findings

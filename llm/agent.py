@@ -3,7 +3,7 @@ import os
 import json
 from openai import OpenAI
 from dotenv import load_dotenv
-from schemas import NormalizedBundle, LLMOutput, LLMFinding, Severity
+from schemas import NormalizedBundle, LLMOutput, LLMFinding, Severity, A2AMessage
 from llm.prompts import build_system_prompt, build_user_message
 
 load_dotenv()
@@ -16,47 +16,111 @@ client = OpenAI(
 MODEL = "deepseek-chat"
 
 
-def analyze(bundle: NormalizedBundle) -> LLMOutput:
+def analyze(bundle: NormalizedBundle, msg: A2AMessage) -> LLMOutput:
     """
-    Send normalized findings + file contents to DeepSeek.
-    Returns a fully validated LLMOutput object.
-    Falls back to a safe degraded output if the API call fails.
+    Send normalized findings + full A2A context to DeepSeek.
     """
     if not bundle.findings:
         return _clean_output(bundle.scan_id)
 
-    # Build the output schema string so LLM knows exactly what to return
+    import json
     output_schema = json.dumps(LLMOutput.model_json_schema(), indent=2)
 
     system_prompt = build_system_prompt(output_schema)
-    user_message  = build_user_message(
-        findings_json=bundle.model_dump_json(indent=2),
-        file_contents=bundle.file_contents,
-    )
+    user_message  = build_user_message(bundle)
 
     print(f"[llm] Sending {len(bundle.findings)} findings to DeepSeek...")
+    print(f"[llm] Reflexion enabled: {msg.needs_reflexion}")
 
     try:
-        response = client.chat.completions.create(
-            model=MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user",   "content": user_message},
-            ],
-            temperature=0.1,
-            max_tokens=4000,
-            response_format={"type": "json_object"},
-        )
+        result = _single_llm_call(system_prompt, user_message, bundle.scan_id)
 
-        raw_text = response.choices[0].message.content
-        print(f"[llm] Response received ({len(raw_text)} chars)")
+        if msg.needs_reflexion:
+            result = _run_reflexion_loop(
+                bundle=bundle,
+                system_prompt=system_prompt,
+                draft=result,
+                threshold=msg.reflexion_threshold,
+                max_retries=msg.reflexion_max_retries,
+            )
 
-        return _parse_and_validate(raw_text, bundle.scan_id)
+        return result
 
     except Exception as e:
         print(f"[llm] ERROR: {e}")
         return _fallback_output(bundle, str(e))
 
+def _single_llm_call(
+    system_prompt: str,
+    user_message: str,
+    scan_id: str
+) -> LLMOutput:
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user",   "content": user_message},
+        ],
+        temperature=0.1,
+        max_tokens=4000,
+        response_format={"type": "json_object"},
+    )
+    raw_text = response.choices[0].message.content
+    print(f"[llm] Response received ({len(raw_text)} chars)")
+    return _parse_and_validate(raw_text, scan_id)
+
+
+def _run_reflexion_loop(
+    bundle: NormalizedBundle,
+    system_prompt: str,
+    draft: LLMOutput,
+    threshold: float,
+    max_retries: int,
+) -> LLMOutput:
+    import json
+    for attempt in range(max_retries):
+        avg = _average_confidence(draft)
+        print(f"[llm] Reflexion check: avg_confidence={avg:.2f} threshold={threshold}")
+        if avg >= threshold:
+            print(f"[llm] Threshold met — stopping reflexion")
+            break
+
+        print(f"[llm] Reflexion pass {attempt + 1}/{max_retries}")
+        reflexion_prompt = f"""
+You previously produced this security analysis:
+{draft.model_dump_json(indent=2)}
+
+Critique your own findings:
+- Are any confidence scores too high or too low given the code context?
+- Did you miss attack chain connections between findings?
+- Are any findings clearly false positives on reflection?
+- Does the remediation actually fix the root cause?
+
+Return a corrected version in the same JSON schema.
+""".strip()
+
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": reflexion_prompt},
+            ],
+            temperature=0.1,
+            max_tokens=4000,
+            response_format={"type": "json_object"},
+        )
+        draft = _parse_and_validate(
+            response.choices[0].message.content, bundle.scan_id
+        )
+
+    return draft
+
+
+def _average_confidence(result: LLMOutput) -> float:
+    confirmed = [f for f in result.findings if not f.is_false_positive]
+    if not confirmed:
+        return 1.0
+    return sum(f.final_confidence for f in confirmed) / len(confirmed)
 
 def _parse_and_validate(raw_text: str, scan_id: str) -> LLMOutput:
     """

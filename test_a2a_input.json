@@ -1,0 +1,59 @@
+{
+  "protocol": "A2A/1.0",
+  "metadata": {
+    "message_id": "msg_987654321",
+    "correlation_id": "job_ref_argus_001",
+    "timestamp": "2026-02-24T14:30:00Z",
+    "sender": "argus-librarian-service",
+    "version": "1.2.0"
+  },
+  "routing_instructions": {
+    "priority": "HIGH",
+    "target_specialist": "Security_Reviewer",
+    "ttl_seconds": 3600
+  },
+  "payload": {
+    "intent": "REFACTOR_AUTH_PIPELINE",
+    "knowledge_graph": {
+      "nodes": [
+        {
+          "id": "A",
+          "file": "auth_service.py",
+          "role": "PRIMARY_SOURCE",
+          "symbols_changed": ["verify_jwt"],
+          "logic_delta": "Changed algorithm from HS256 to RS256."
+        },
+        {
+          "id": "B",
+          "file": "config_loader.py",
+          "role": "DEPENDENCY",
+          "impact": "Now requires public_key path in environment variables.",
+          "status": "AFFECTED_BUT_NOT_MODIFIED"
+        }
+      ]
+    },
+    "dehydrated_content": {
+      "high_signal_code": [
+        {
+          "file": "auth_service.py",
+          "snippet": "def verify_jwt(token):\n    public_key = os.getenv('PUBLIC_KEY')\n    return jwt.decode(token, public_key, algorithms=['RS256'])"
+        }
+      ],
+      "policy_constraints": [
+        "Security Standard v4: All RSA keys must be 4096-bit."
+      ]
+    },
+    "active_problem_set": [
+      {
+        "type": "LOGIC_INCONSISTENCY",
+        "location": "config_loader.py:45",
+        "problem": "Loader expects HMAC secret; new logic expects RSA Public Key.",
+        "remediation_hint": "Update ConfigLoader to support .pem file loading."
+      }
+    ]
+  },
+  "environment": "pr",
+  "needs_reflexion": true,
+  "reflexion_threshold": 0.75,
+  "reflexion_max_retries": 2
+}
