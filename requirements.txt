@@ -13,7 +13,12 @@ python-dotenv==1.2.2       # Loading .env for API keys & environment (llm/agent.
 # ------------------------------------------------------------------------------
 openai==2.29.0             # Official LLM interface for reasoning & reflexion (llm/agent.py)
 
-# [3] SECURITY TOOL: SEMGREP (SAST)
+# [3] AGENT SERVER & DEPLOYMENT (A2A Protocol)
+# ------------------------------------------------------------------------------
+a2a-sdk==0.3.25            # Protocol layer for Agent-to-Agent communication (executor.py)
+uvicorn==0.42.0            # High-performance ASGI server for hosting the agent (executor.py)
+
+# [4] SECURITY TOOL: SEMGREP (SAST)
 # ------------------------------------------------------------------------------
 semgrep==1.156.0           # Python-based CLI tool for semantic code analysis
 
@@ -21,7 +26,7 @@ semgrep==1.156.0           # Python-based CLI tool for semantic code analysis
 # EXTERNAL SECURITY TOOLS SETUP (Manual Installation Required)
 # ==============================================================================
 
-# [4] GITLEAKS (Secret Scanning)
+# [5] GITLEAKS (Secret Scanning)
 # Manual Installation Required:
 # ------------------------------------------------------------------------------
 # LINUX:
@@ -31,7 +36,7 @@ semgrep==1.156.0           # Python-based CLI tool for semantic code analysis
 # MAC:
 #   brew install gitleaks
 
-# [5] TRIVY (Dependency Vulnerability Scanner)
+# [6] TRIVY (Dependency Vulnerability Scanner)
 # Manual Installation Required:
 # ------------------------------------------------------------------------------
 # LINUX:
@@ -39,7 +44,7 @@ semgrep==1.156.0           # Python-based CLI tool for semantic code analysis
 # MAC:
 #   brew install trivy
 
-# [6] OWASP ZAP (DAST - Dynamic Analysis) Target: Staging Environments
+# [7] OWASP ZAP (DAST - Dynamic Analysis) Target: Staging Environments
 # ------------------------------------------------------------------------------
 # Download and install manually from: https://www.zaproxy.org/
 # Must be running as a local daemon at http://localhost:8080 during scans.
