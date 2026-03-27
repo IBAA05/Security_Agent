@@ -2,6 +2,12 @@
 # ARGUS SECURITY AGENT - FULL DEPENDENCY LIST
 # ==============================================================================
 
+# [0] PYTHON ENVIRONMENT
+# ------------------------------------------------------------------------------
+# RECOMMENDED VERSION: Python 3.11 OR 3.12+ (Ubuntu Side-by-Side install)
+# Install: sudo add-apt-repository ppa:deadsnakes/ppa && apt install python3.12
+# ------------------------------------------------------------------------------
+
 # [1] CORE SECURITY AGENT LIBRARIES
 # ------------------------------------------------------------------------------
 pydantic==2.12.5           # High-performance data schemas (schemas.py)
